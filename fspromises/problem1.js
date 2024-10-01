@@ -1,43 +1,34 @@
-/*Using promises and the fs module's asynchronous functions, do the following:
-        1. Create a directory of random JSON files
-        2. Delete those files simultaneously */
+const fs = require("fs").promises;
+const path = require("path");
 
-        const fs = require("fs").promises;
-        const path = require('path');
+function main(currentPath) {
+    let dir = path.join(currentPath, "randomJsonFiles");
+    fs.mkdir(dir)
+        .then(() => createFiles(dir, 5))
+        .then(() => deleteFiles(dir))
+        .then(() => console.log("Successfully created and deleted the files"))
+        .catch((error) => console.log(error));
+}
 
-    async function main(currentPath){
-            try{
-                let dir = path.join(currentPath,'randomJsonFiles');
-                await fs.mkdir(dir);
-                
-                // creating the files
-                await createFiles(dir,5);
+function createFiles(dir, numberOfFiles) {
+    let arr = [];
+    for (let i = 1; i <= numberOfFiles; i++) {
+        let filePath = path.join(dir, `file${i}.json`);
+        arr.push(
+            fs.writeFile(filePath, "")
+                .then(() => console.log(`file${i} created`))
+        );
+    }
+    return Promise.all(arr); // Return the Promise.all for proper chaining
+}
 
-                // deleting the files
-                await deleteFiles(dir);
+function deleteFiles(dir) {
+    return fs.readdir(dir, "utf-8").then((files) => {
+        let promises = files
+            .filter((file) => path.extname(file) === ".json")
+            .map((file) => fs.unlink(path.join(dir, file)));
+        return Promise.all(promises);
+    });
+}
 
-            }
-           catch(error){
-            console.log(error);
-           }
-
-        }
-        async function createFiles(dir,numberOfFiles) {
-        
-                for(let i=0;i<=numberOfFiles;i++){
-                        let filePath = path.join(dir,`file${i}.json`);
-                        await fs.writeFile(filePath,'');
-                }
-        }
-        
-        async function deleteFiles(dir) {
-                let data = await fs.readdir(dir,'utf-8');
-              for(let file of data){
-                let filePath = path.join(dir,file);
-                if(path.extname(file)==='.json'){
-                        await fs.unlink(filePath);
-                }
-              }
-        }
-        
 module.exports = main;
