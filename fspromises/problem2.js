@@ -1,54 +1,66 @@
-/*Using promises and the fs module's asynchronous functions, do the following:
-        1. Read the given file lipsum.txt
-        2. Convert the content to uppercase & write to a new file. Store the name of the new file in filenames.txt
-        3. Read the new file and convert it to lower case. Then split the contents into sentences. Then write it to a new file. Store the name of the new file in filenames.txt
-        4. Read the new files, sort the content, write it out to a new file. Store the name of the new file in filenames.txt
-        5. Read the contents of filenames.txt and delete all the new files that are mentioned in that list simultaneously.*/
+const fs = require("fs").promises;
+const path = require("path");
 
-        const fs = require('fs').promises;
-        const path = require('path');
+function main(dir) {
+    const file = 'lipsum.txt';
+    const filePath = path.join(dir, file);
+    const fileNames = path.join(dir, 'fileNames.txt');
 
-        async function main(currentPath) {
-            try{
-            let fileName = 'lipsum.txt';
-            let filePath = path.join(currentPath,fileName);
-            let filenamesFile = path.join(currentPath,'filenames.txt');
-            await fs.writeFile(filePath,'I am uday kiran redddy');
-            
-            // writing the data to upper case
-            let data = await fs.readFile(filePath,'utf8');
-            let newData =  data.toUpperCase();
-            let newPath = path.join(currentPath,'file1.txt');
-            await fs.writeFile(newPath,newData);
-            await fs.appendFile(filenamesFile, newPath + '\n');
-            
-            // converting the data to lower case and split into sentence and written in anthor file
-            data = await fs.readFile(newPath, 'utf8');
-            let lowerCaseData = data.toLowerCase();
-            let sentences = lowerCaseData.split('.').map(s => s.trim()).filter(Boolean).join('.\n');
-            let lowerCasePath = path.join(currentPath, 'file2.txt');
-            await fs.writeFile(lowerCasePath, sentences);
-            await fs.appendFile(filenamesFile, lowerCasePath + '\n');
-            
-            // sorted the data and written in anthor file 
-            data = await fs.readFile(newPath,'utf-8');
-            let sortedData = data.split(' ').sort().join(' ');
-            let newPath2 = path.join(currentPath,'file3.txt');
-            await fs.writeFile(newPath2,sortedData);
-            await fs.appendFile(filenamesFile, newPath2 + '\n');
-            
-            // reading the stored filename file and deleting them
-            const filesData = await fs.readFile(filenamesFile, 'utf8');
-            const files = filesData.split('\n').filter(Boolean);
-            await Promise.all(files.map(file => fs.unlink(file)));
-            }
-            catch(error){
-                console.log(error);
-            }
-            
-        }
-        
+    // Write initial content to lipsum.txt, then start processing
+    fs.writeFile(filePath, 'Hi, my name is window. How was your day? Let me know if you want anything.')
+        .then(() => upperCase(filePath, fileNames))
+        .then(() => lowerCase(path.join(dir, 'file1.txt'), fileNames))
+        .then(() => sortTheContent(path.join(dir, 'file2.txt'), fileNames))
+        .then(() => deleteFiles(dir, fileNames))
+        .then(() => console.log('All files processed and deleted'))
+        .catch((error) => console.error('Error:', error));
+}
+
+function upperCase(file, fileNames) {
+    let upperCaseFile; 
+    return fs.readFile(file, 'utf-8')
+        .then((data) => {
+            console.log(data);
+            const upperCaseContent = data.toUpperCase();
+            upperCaseFile = 'file1.txt'; // Only save the file name
+            return fs.writeFile(path.join(path.dirname(file), upperCaseFile), upperCaseContent);
+        })
+        .then(() => fs.appendFile(fileNames, upperCaseFile + '\n')); // Append only the file name
+}
+
+function lowerCase(file, fileNames) {
+    let lowerCaseFile;
+    return fs.readFile(file, 'utf-8')
+        .then((data) => {
+            console.log(data);
+            const lowerCaseSentences = data.toLowerCase().split('.').filter(Boolean).join('. ');
+            lowerCaseFile = 'file2.txt'; // Only save the file name
+            return fs.writeFile(path.join(path.dirname(file), lowerCaseFile), lowerCaseSentences);
+        })
+        .then(() => fs.appendFile(fileNames, lowerCaseFile + '\n')); // Append only the file name
+}
+
+function sortTheContent(file, fileNames) {
+    let sortedFile; 
+    return fs.readFile(file, 'utf-8')
+        .then((data) => {
+            console.log(data);
+            const sortedContent = data.split('.').filter(Boolean).sort().join('. ');
+            console.log(sortedContent);
+            sortedFile = 'file3.txt'; // Only save the file name
+            return fs.writeFile(path.join(path.dirname(file), sortedFile), sortedContent);
+        })
+        .then(() => fs.appendFile(fileNames, sortedFile + '\n')); // Append only the file name
+}
+
+function deleteFiles(dir, fileNames) {
+    return fs.readFile(fileNames, 'utf-8')
+        .then((data) => {
+            const files = data.split('\n').filter(Boolean).map(file => file.trim()); 
+            const deletePromises = files.map((file) => fs.unlink(file)); 
+            return Promise.all(deletePromises); // Wait for all deletions to complete
+        })
+        .then(()=>fs.writeFile(fileNames,''));
+}
+
 module.exports = main;
-        
-        
-       
