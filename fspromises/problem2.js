@@ -53,7 +53,7 @@ function sortTheContent(file, fileNames) {
         .then(() => fs.appendFile(fileNames, sortedFile + '\n')); // Append only the file name
 }
 
-function deleteFiles(dir, fileNames) {
+function deleteFiles(fileNames) {
     return fs.readFile(fileNames, 'utf-8')
         .then((data) => {
             const files = data.split('\n').filter(Boolean).map(file => file.trim()); 
